@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CatSchedule - NU Cebu Schedule Viewer & Notes</title>
+  <title>CatSchedule - NU Cebu Schedule, Notes & Reminders</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- FontAwesome Icons -->
@@ -16,38 +16,85 @@
         extend: {
           fontFamily: {
             sans: ['Plus Jakarta Sans', 'sans-serif'],
-          },
-          colors: {
-            nu: {
-              navy: '#002B66',
-              blue: '#0052CC',
-              gold: '#FFC72C',
-              lightGold: '#FFF9E6',
-              bg: '#F8FAFC',
-            }
           }
         }
       }
     }
   </script>
+  <style>
+    /* Theme Definitions */
+    body.theme-navy {
+      --bg-main: #f8fafc;
+      --header-bg: #002B66;
+      --header-text: #ffffff;
+      --accent-color: #0052CC;
+      --badge-bg: #FFC72C;
+      --badge-text: #002B66;
+    }
+    body.theme-dark {
+      --bg-main: #0f172a;
+      --header-bg: #1e293b;
+      --header-text: #f8fafc;
+      --accent-color: #38bdf8;
+      --badge-bg: #3b82f6;
+      --badge-text: #ffffff;
+    }
+    body.theme-emerald {
+      --bg-main: #f0fdf4;
+      --header-bg: #065f46;
+      --header-text: #ffffff;
+      --accent-color: #059669;
+      --badge-bg: #34d399;
+      --badge-text: #064e3b;
+    }
+    body.theme-purple {
+      --bg-main: #faf5ff;
+      --header-bg: #581c87;
+      --header-text: #ffffff;
+      --accent-color: #9333ea;
+      --badge-bg: #c084fc;
+      --badge-text: #3b0764;
+    }
+    
+    .theme-header { background-color: var(--header-bg); color: var(--header-text); }
+    .theme-accent { color: var(--accent-color); }
+    .theme-badge { background-color: var(--badge-bg); color: var(--badge-text); }
+  </style>
 </head>
-<body class="bg-slate-100 font-sans text-slate-800 antialiased min-h-screen flex flex-col">
+<body id="app-body" class="theme-navy bg-slate-100 font-sans text-slate-800 antialiased min-h-screen flex flex-col">
 
   <!-- TOP HEADER / NAV -->
-  <header class="bg-nu-navy text-white shadow-md sticky top-0 z-30">
+  <header class="theme-header shadow-md sticky top-0 z-30 transition-colors duration-300">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
       <div class="flex items-center space-x-3">
-        <div class="w-10 h-10 rounded-lg bg-nu-gold flex items-center justify-center font-extrabold text-nu-navy text-xl shadow">
+        <div class="w-10 h-10 rounded-lg theme-badge flex items-center justify-center font-extrabold text-xl shadow">
           CS
         </div>
         <div>
           <h1 class="font-bold text-lg leading-tight">CatSchedule.com</h1>
-          <p class="text-xs text-slate-300">NU Cebu Schedule Viewer & Subject Notes</p>
+          <p class="text-xs opacity-80">NU Cebu Schedule, Reminders & Topic Notes</p>
         </div>
       </div>
-      <div class="flex items-center space-x-2">
+      
+      <div class="flex items-center space-x-3">
+        <!-- Theme Selector Dropdown -->
+        <div class="relative">
+          <select id="theme-selector" onchange="changeTheme(this.value)" class="bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs rounded-lg px-2.5 py-1.5 font-semibold focus:outline-none cursor-pointer">
+            <option value="theme-navy" class="text-slate-800">🔵 NU Navy & Gold</option>
+            <option value="theme-dark" class="text-slate-800">🌙 Dark Mode</option>
+            <option value="theme-emerald" class="text-slate-800">🌿 Emerald Green</option>
+            <option value="theme-purple" class="text-slate-800">🍇 Pastel Purple</option>
+          </select>
+        </div>
+
+        <!-- Open Drawer Button (Trash & Archive) -->
+        <button onclick="toggleDrawer(true)" class="inline-flex items-center px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-semibold transition relative">
+          <i class="fa-solid fa-box-archive mr-1.5"></i> Vault & Trash
+          <span id="drawer-count-badge" class="ml-1.5 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full hidden">0</span>
+        </button>
+
         <button onclick="window.print()" class="hidden sm:inline-flex items-center px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-semibold transition">
-          <i class="fa-solid fa-print mr-2"></i> Print Schedule
+          <i class="fa-solid fa-print mr-1.5"></i> Print
         </button>
       </div>
     </div>
@@ -56,9 +103,13 @@
   <!-- MAIN NAVIGATION TABS -->
   <nav class="bg-white border-b border-slate-200 sticky top-[58px] z-20 shadow-sm">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-8">
-      <button id="tab-schedule-btn" onclick="switchTab('schedule')" class="py-3 px-1 border-b-2 border-nu-navy font-bold text-sm text-nu-navy flex items-center space-x-2">
+      <button id="tab-schedule-btn" onclick="switchTab('schedule')" class="py-3 px-1 border-b-2 border-slate-800 font-bold text-sm text-slate-800 flex items-center space-x-2">
         <i class="fa-solid fa-calendar-days"></i>
         <span>Schedule Viewer</span>
+      </button>
+      <button id="tab-reminders-btn" onclick="switchTab('reminders')" class="py-3 px-1 border-b-2 border-transparent font-medium text-sm text-slate-500 hover:text-slate-800 flex items-center space-x-2">
+        <i class="fa-solid fa-bell"></i>
+        <span>Reminders & Tasks</span>
       </button>
       <button id="tab-notes-btn" onclick="switchTab('notes')" class="py-3 px-1 border-b-2 border-transparent font-medium text-sm text-slate-500 hover:text-slate-800 flex items-center space-x-2">
         <i class="fa-solid fa-book-bookmark"></i>
@@ -67,7 +118,7 @@
     </div>
   </nav>
 
-  <!-- CONTAINER -->
+  <!-- MAIN CONTAINER -->
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow w-full">
 
     <!-- STUDENT HEADER INFORMATION CARD -->
@@ -98,11 +149,10 @@
 
     <!-- VIEW 1: SCHEDULE VIEWER -->
     <section id="view-schedule" class="space-y-6">
-      <!-- SCHEDULE MATRIX -->
       <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div class="p-4 border-b border-slate-200 bg-slate-50 flex flex-wrap items-center justify-between gap-3">
           <h2 class="font-bold text-slate-800 flex items-center">
-            <i class="fa-solid fa-clock text-nu-navy mr-2"></i> Weekly Class Schedule
+            <i class="fa-solid fa-clock theme-accent mr-2"></i> Weekly Class Schedule
           </h2>
           <div class="flex items-center space-x-2 text-xs">
             <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-blue-500 inline-block mr-1"></span> Mon / Thu (MTH)</span>
@@ -124,246 +174,148 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 text-center">
-              <!-- 9:00 AM - 11:00 AM -->
               <tr>
                 <td class="p-2 font-semibold text-slate-500 bg-slate-50/50">09:00 AM - 11:00 AM</td>
-                <td class="p-1">
-                  <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-900 p-2 rounded text-left shadow-sm">
-                    <p class="font-bold">GEACM01X</p>
-                    <p class="text-[11px] font-medium truncate">Adv. Communication</p>
-                    <p class="text-[10px] text-blue-700 mt-1"><i class="fa-solid fa-location-dot"></i> Room 707</p>
-                  </div>
-                </td>
-                <td class="p-1">
-                  <div class="bg-emerald-50 border-l-4 border-emerald-500 text-emerald-900 p-2 rounded text-left shadow-sm">
-                    <p class="font-bold">PSYCH06X</p>
-                    <p class="text-[11px] font-medium truncate">Abnormal Psychology</p>
-                    <p class="text-[10px] text-emerald-700 mt-1"><i class="fa-solid fa-location-dot"></i> Room 1001</p>
-                  </div>
-                </td>
+                <td class="p-1"><div class="bg-blue-50 border-l-4 border-blue-500 text-blue-900 p-2 rounded text-left shadow-sm"><p class="font-bold">GEACM01X</p><p class="text-[11px] font-medium truncate">Adv. Communication</p><p class="text-[10px] text-blue-700 mt-1"><i class="fa-solid fa-location-dot"></i> Room 707</p></div></td>
+                <td class="p-1"><div class="bg-emerald-50 border-l-4 border-emerald-500 text-emerald-900 p-2 rounded text-left shadow-sm"><p class="font-bold">PSYCH06X</p><p class="text-[11px] font-medium truncate">Abnormal Psychology</p><p class="text-[10px] text-emerald-700 mt-1"><i class="fa-solid fa-location-dot"></i> Room 1001</p></div></td>
                 <td class="p-1 text-slate-300 italic">-- No Class --</td>
-                <td class="p-1">
-                  <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-900 p-2 rounded text-left shadow-sm">
-                    <p class="font-bold">GEACM01X</p>
-                    <p class="text-[11px] font-medium truncate">Adv. Communication</p>
-                    <p class="text-[10px] text-blue-700 mt-1"><i class="fa-solid fa-location-dot"></i> Room 707</p>
-                  </div>
-                </td>
-                <td class="p-1">
-                  <div class="bg-emerald-50 border-l-4 border-emerald-500 text-emerald-900 p-2 rounded text-left shadow-sm">
-                    <p class="font-bold">PSYCH06X</p>
-                    <p class="text-[11px] font-medium truncate">Abnormal Psychology</p>
-                    <p class="text-[10px] text-emerald-700 mt-1"><i class="fa-solid fa-location-dot"></i> Room 1001</p>
-                  </div>
-                </td>
+                <td class="p-1"><div class="bg-blue-50 border-l-4 border-blue-500 text-blue-900 p-2 rounded text-left shadow-sm"><p class="font-bold">GEACM01X</p><p class="text-[11px] font-medium truncate">Adv. Communication</p><p class="text-[10px] text-blue-700 mt-1"><i class="fa-solid fa-location-dot"></i> Room 707</p></div></td>
+                <td class="p-1"><div class="bg-emerald-50 border-l-4 border-emerald-500 text-emerald-900 p-2 rounded text-left shadow-sm"><p class="font-bold">PSYCH06X</p><p class="text-[11px] font-medium truncate">Abnormal Psychology</p><p class="text-[10px] text-emerald-700 mt-1"><i class="fa-solid fa-location-dot"></i> Room 1001</p></div></td>
               </tr>
-
-              <!-- 11:00 AM - 01:00 PM -->
               <tr>
                 <td class="p-2 font-semibold text-slate-500 bg-slate-50/50">11:00 AM - 01:00 PM</td>
-                <td class="p-1">
-                  <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-900 p-2 rounded text-left shadow-sm">
-                    <p class="font-bold">GESOC01X</p>
-                    <p class="text-[11px] font-medium truncate">Gender and Society</p>
-                    <p class="text-[10px] text-blue-700 mt-1"><i class="fa-solid fa-location-dot"></i> Room 707</p>
-                  </div>
-                </td>
+                <td class="p-1"><div class="bg-blue-50 border-l-4 border-blue-500 text-blue-900 p-2 rounded text-left shadow-sm"><p class="font-bold">GESOC01X</p><p class="text-[11px] font-medium truncate">Gender and Society</p><p class="text-[10px] text-blue-700 mt-1"><i class="fa-solid fa-location-dot"></i> Room 707</p></div></td>
                 <td class="p-1 text-slate-300 italic">-- Break --</td>
                 <td class="p-1 text-slate-300 italic">-- No Class --</td>
-                <td class="p-1">
-                  <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-900 p-2 rounded text-left shadow-sm">
-                    <p class="font-bold">GESOC01X</p>
-                    <p class="text-[11px] font-medium truncate">Gender and Society</p>
-                    <p class="text-[10px] text-blue-700 mt-1"><i class="fa-solid fa-location-dot"></i> Room 707</p>
-                  </div>
-                </td>
+                <td class="p-1"><div class="bg-blue-50 border-l-4 border-blue-500 text-blue-900 p-2 rounded text-left shadow-sm"><p class="font-bold">GESOC01X</p><p class="text-[11px] font-medium truncate">Gender and Society</p><p class="text-[10px] text-blue-700 mt-1"><i class="fa-solid fa-location-dot"></i> Room 707</p></div></td>
                 <td class="p-1 text-slate-300 italic">-- Break --</td>
               </tr>
-
-              <!-- 01:00 PM - 03:00 PM -->
               <tr>
                 <td class="p-2 font-semibold text-slate-500 bg-slate-50/50">01:00 PM - 03:00 PM</td>
-                <td class="p-1">
-                  <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-900 p-2 rounded text-left shadow-sm">
-                    <p class="font-bold">PSYCH26X</p>
-                    <p class="text-[11px] font-medium truncate">Educational Psych</p>
-                    <p class="text-[10px] text-blue-700 mt-1"><i class="fa-solid fa-location-dot"></i> Room 707</p>
-                  </div>
-                </td>
-                <td class="p-1">
-                  <div class="bg-emerald-50 border-l-4 border-emerald-500 text-emerald-900 p-2 rounded text-left shadow-sm">
-                    <p class="font-bold">GEPOP01X</p>
-                    <p class="text-[11px] font-medium truncate">Philippine Pop Culture</p>
-                    <p class="text-[10px] text-emerald-700 mt-1"><i class="fa-solid fa-location-dot"></i> Room 711</p>
-                  </div>
-                </td>
+                <td class="p-1"><div class="bg-blue-50 border-l-4 border-blue-500 text-blue-900 p-2 rounded text-left shadow-sm"><p class="font-bold">PSYCH26X</p><p class="text-[11px] font-medium truncate">Educational Psych</p><p class="text-[10px] text-blue-700 mt-1"><i class="fa-solid fa-location-dot"></i> Room 707</p></div></td>
+                <td class="p-1"><div class="bg-emerald-50 border-l-4 border-emerald-500 text-emerald-900 p-2 rounded text-left shadow-sm"><p class="font-bold">GEPOP01X</p><p class="text-[11px] font-medium truncate">Philippine Pop Culture</p><p class="text-[10px] text-emerald-700 mt-1"><i class="fa-solid fa-location-dot"></i> Room 711</p></div></td>
                 <td class="p-1 text-slate-300 italic">-- No Class --</td>
-                <td class="p-1">
-                  <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-900 p-2 rounded text-left shadow-sm">
-                    <p class="font-bold">PSYCH26X</p>
-                    <p class="text-[11px] font-medium truncate">Educational Psych</p>
-                    <p class="text-[10px] text-blue-700 mt-1"><i class="fa-solid fa-location-dot"></i> Room 707</p>
-                  </div>
-                </td>
-                <td class="p-1">
-                  <div class="bg-emerald-50 border-l-4 border-emerald-500 text-emerald-900 p-2 rounded text-left shadow-sm">
-                    <p class="font-bold">GEPOP01X</p>
-                    <p class="text-[11px] font-medium truncate">Philippine Pop Culture</p>
-                    <p class="text-[10px] text-emerald-700 mt-1"><i class="fa-solid fa-location-dot"></i> Room 711</p>
-                  </div>
-                </td>
+                <td class="p-1"><div class="bg-blue-50 border-l-4 border-blue-500 text-blue-900 p-2 rounded text-left shadow-sm"><p class="font-bold">PSYCH26X</p><p class="text-[11px] font-medium truncate">Educational Psych</p><p class="text-[10px] text-blue-700 mt-1"><i class="fa-solid fa-location-dot"></i> Room 707</p></div></td>
+                <td class="p-1"><div class="bg-emerald-50 border-l-4 border-emerald-500 text-emerald-900 p-2 rounded text-left shadow-sm"><p class="font-bold">GEPOP01X</p><p class="text-[11px] font-medium truncate">Philippine Pop Culture</p><p class="text-[10px] text-emerald-700 mt-1"><i class="fa-solid fa-location-dot"></i> Room 711</p></div></td>
               </tr>
-
-              <!-- 03:00 PM - 05:00 / 05:40 PM -->
               <tr>
                 <td class="p-2 font-semibold text-slate-500 bg-slate-50/50">03:00 PM - 05:00 / 05:40 PM</td>
-                <td class="p-1">
-                  <div class="bg-amber-50 border-l-4 border-amber-500 text-amber-900 p-2 rounded text-left shadow-sm">
-                    <p class="font-bold">MCFIT04X</p>
-                    <p class="text-[11px] font-medium truncate">PathFit 4 (3:00 - 5:40 PM)</p>
-                    <p class="text-[10px] text-amber-700 mt-1"><i class="fa-solid fa-location-dot"></i> Room 1014</p>
-                  </div>
-                </td>
-                <td class="p-1">
-                  <div class="bg-emerald-50 border-l-4 border-emerald-500 text-emerald-900 p-2 rounded text-left shadow-sm">
-                    <p class="font-bold">PSYCH07X</p>
-                    <p class="text-[11px] font-medium truncate">Filipino Psychology</p>
-                    <p class="text-[10px] text-emerald-700 mt-1"><i class="fa-solid fa-location-dot"></i> Room 713</p>
-                  </div>
-                </td>
+                <td class="p-1"><div class="bg-amber-50 border-l-4 border-amber-500 text-amber-900 p-2 rounded text-left shadow-sm"><p class="font-bold">MCFIT04X</p><p class="text-[11px] font-medium truncate">PathFit 4 (3:00 - 5:40 PM)</p><p class="text-[10px] text-amber-700 mt-1"><i class="fa-solid fa-location-dot"></i> Room 1014</p></div></td>
+                <td class="p-1"><div class="bg-emerald-50 border-l-4 border-emerald-500 text-emerald-900 p-2 rounded text-left shadow-sm"><p class="font-bold">PSYCH07X</p><p class="text-[11px] font-medium truncate">Filipino Psychology</p><p class="text-[10px] text-emerald-700 mt-1"><i class="fa-solid fa-location-dot"></i> Room 713</p></div></td>
                 <td class="p-1 text-slate-300 italic">-- No Class --</td>
                 <td class="p-1 text-slate-300 italic">-- Free Time --</td>
-                <td class="p-1">
-                  <div class="bg-emerald-50 border-l-4 border-emerald-500 text-emerald-900 p-2 rounded text-left shadow-sm">
-                    <p class="font-bold">PSYCH07X</p>
-                    <p class="text-[11px] font-medium truncate">Filipino Psychology</p>
-                    <p class="text-[10px] text-emerald-700 mt-1"><i class="fa-solid fa-location-dot"></i> Room 713</p>
-                  </div>
-                </td>
+                <td class="p-1"><div class="bg-emerald-50 border-l-4 border-emerald-500 text-emerald-900 p-2 rounded text-left shadow-sm"><p class="font-bold">PSYCH07X</p><p class="text-[11px] font-medium truncate">Filipino Psychology</p><p class="text-[10px] text-emerald-700 mt-1"><i class="fa-solid fa-location-dot"></i> Room 713</p></div></td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
 
-      <!-- SUBJECT CARDS GRID -->
       <h3 class="font-bold text-slate-800 text-base mt-6 mb-3">Enrolled Subjects List</h3>
-      <div id="subjects-cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <!-- Javascript populated -->
+      <div id="subjects-cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </section>
+
+    <!-- VIEW 2: REMINDERS & TASKS -->
+    <section id="view-reminders" class="hidden space-y-6">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h2 class="font-bold text-slate-800 text-lg mb-4 flex items-center">
+          <i class="fa-solid fa-bell theme-accent mr-2"></i> Reminders & Task Manager
+        </h2>
+
+        <!-- New Reminder Form -->
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 mb-3">Add Task or Exam Reminder</h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+            <div>
+              <input type="text" id="rem-title" placeholder="Task Title (e.g., PSYCH06X Midterm Review)" class="w-full bg-white border border-slate-300 text-xs rounded-lg p-2.5 font-semibold text-slate-800" />
+            </div>
+            <div>
+              <select id="rem-subject" class="w-full bg-white border border-slate-300 text-xs rounded-lg p-2.5 font-semibold text-slate-800">
+                <!-- Dynamically Populated -->
+              </select>
+            </div>
+            <div>
+              <input type="date" id="rem-date" class="w-full bg-white border border-slate-300 text-xs rounded-lg p-2.5 font-semibold text-slate-800" />
+            </div>
+          </div>
+          <div class="flex justify-end">
+            <button onclick="addReminder()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition flex items-center">
+              <i class="fa-solid fa-plus mr-1.5"></i> Add Reminder
+            </button>
+          </div>
+        </div>
+
+        <!-- Reminders List -->
+        <div id="reminders-container" class="space-y-3">
+          <!-- Dynamically Populated -->
+        </div>
       </div>
     </section>
 
-    <!-- VIEW 2: TOPIC NOTES NOTEBOOK -->
+    <!-- VIEW 3: TOPIC NOTES NOTEBOOK -->
     <section id="view-notes" class="hidden space-y-6">
       <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
           <div>
             <h2 class="font-bold text-slate-800 text-lg flex items-center">
-              <i class="fa-solid fa-pen-to-square text-nu-navy mr-2"></i> Topic-Based Subject Notebook
+              <i class="fa-solid fa-pen-to-square theme-accent mr-2"></i> Topic-Based Subject Notebook
             </h2>
-            <p class="text-xs text-slate-500">Create, organize, and view notes organized strictly by topics and sub-topics with automatic timestamps.</p>
+            <p class="text-xs text-slate-500">Create, organize, and view study notes with automatic date and time stamps.</p>
           </div>
 
-          <!-- Subject Selector Dropdown -->
           <div class="w-full md:w-64">
             <label class="block text-xs font-bold text-slate-600 mb-1">Select Subject:</label>
-            <select id="notes-subject-select" onchange="renderSubjectNotes()" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-xs rounded-lg p-2.5 font-semibold focus:ring-2 focus:ring-nu-navy">
+            <select id="notes-subject-select" onchange="renderSubjectNotes()" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-xs rounded-lg p-2.5 font-semibold">
               <!-- Dynamically populated -->
             </select>
           </div>
         </div>
 
-        <!-- NEW TOPIC NOTE FORM -->
         <div class="mt-5 bg-slate-50 rounded-xl p-4 border border-slate-200">
           <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 mb-3 flex items-center">
-            <i class="fa-solid fa-plus-circle text-nu-blue mr-1.5"></i> Add New Topic Note
+            <i class="fa-solid fa-plus-circle theme-accent mr-1.5"></i> Add New Topic Note
           </h3>
           <div class="space-y-3">
             <div>
-              <input type="text" id="new-topic-title" placeholder="Topic Title (e.g., Chapter 1: Introduction to Abnormal Psychology)" class="w-full bg-white border border-slate-300 text-xs rounded-lg p-2.5 font-semibold text-slate-800 focus:ring-2 focus:ring-nu-navy" />
+              <input type="text" id="new-topic-title" placeholder="Topic Title (e.g., Chapter 1: Introduction to Abnormal Psychology)" class="w-full bg-white border border-slate-300 text-xs rounded-lg p-2.5 font-semibold text-slate-800" />
             </div>
             <div>
               <input type="text" id="new-subtitle-title" placeholder="Subtitle / Heading (Optional)" class="w-full bg-white border border-slate-300 text-xs rounded-lg p-2 font-medium text-slate-700" />
             </div>
             <div>
-              <textarea id="new-topic-content" rows="3" placeholder="Write main study notes, key terms, or topic summary details..." class="w-full bg-white border border-slate-300 text-xs rounded-lg p-2.5 text-slate-800 focus:ring-2 focus:ring-nu-navy"></textarea>
+              <textarea id="new-topic-content" rows="3" placeholder="Write main study notes, key terms, or topic summary details..." class="w-full bg-white border border-slate-300 text-xs rounded-lg p-2.5 text-slate-800"></textarea>
             </div>
             <div class="flex justify-end">
-              <button onclick="addTopicNote()" class="px-4 py-2 bg-nu-navy hover:bg-nu-blue text-white rounded-lg text-xs font-bold shadow transition flex items-center">
+              <button onclick="addTopicNote()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition flex items-center">
                 <i class="fa-solid fa-floppy-disk mr-1.5"></i> Save Topic Note
               </button>
             </div>
           </div>
         </div>
 
-        <!-- TOPIC NOTES LIST DISPLAY -->
         <div class="mt-6">
           <h3 class="text-sm font-bold text-slate-800 mb-3 flex items-center justify-between">
             <span>Notes Directory</span>
             <span id="notes-count-badge" class="text-xs font-semibold bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full">0 topics</span>
           </h3>
-
-          <div id="topic-notes-container" class="space-y-4">
-            <!-- Dynamically populated -->
-          </div>
+          <div id="topic-notes-container" class="space-y-4"></div>
         </div>
       </div>
     </section>
 
   </main>
 
-  <!-- JAVASCRIPT LOGIC -->
-  <script>
-    // 1. DATA STRUCTURE: ENROLLED SUBJECTS
-    const subjects = [
-      { code: 'GEACM01X', name: 'ADVANCED COMMUNICATION', section: 'PSY255', day: 'MTH', time: '09:00AM - 11:00AM', room: '707', color: 'blue' },
-      { code: 'GEPOP01X', name: 'PHILIPPINE POP CULTURE', section: 'PSY254', day: 'TF', time: '01:00PM - 03:00PM', room: '711', color: 'emerald' },
-      { code: 'GESOC01X', name: 'GENDER AND SOCIETY', section: 'PSY254', day: 'MTH', time: '11:00AM - 01:00PM', room: '707', color: 'blue' },
-      { code: 'MCFIT04X', name: 'PATHFIT 4 PHYSICAL ACTIVITY TOWARDS HEALTH AND FITNESS', section: 'PSY254', day: 'M', time: '03:00PM - 05:40PM', room: '1014', color: 'amber' },
-      { code: 'PSYCH06X', name: 'ABNORMAL PSYCHOLOGY', section: 'PSY253', day: 'TF', time: '09:00AM - 11:00AM', room: '1001', color: 'emerald' },
-      { code: 'PSYCH07X', name: 'FILIPINO PSYCHOLOGY', section: 'PSY254', day: 'TF', time: '03:00PM - 05:00PM', room: '713', color: 'emerald' },
-      { code: 'PSYCH26X', name: 'EDUCATIONAL PSYCHOLOGY', section: 'PSY254', day: 'MTH', time: '01:00PM - 03:00PM', room: '707', color: 'blue' }
-    ];
+  <!-- SIDE DRAWER: ARCHIVE & TRASH VAULT -->
+  <div id="drawer-overlay" onclick="toggleDrawer(false)" class="fixed inset-0 bg-slate-900/50 z-40 hidden transition-opacity"></div>
+  <aside id="drawer-menu" class="fixed top-0 right-0 h-full w-80 bg-white z-50 shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col">
+    <div class="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+      <h3 class="font-bold text-slate-800 text-sm flex items-center">
+        <i class="fa-solid fa-box-archive mr-2 text-slate-600"></i> Archive & Trash Vault
+      </h3>
+      <button onclick="toggleDrawer(false)" class="text-slate-400 hover:text-slate-700 text-sm p-1">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
 
-    // 2. INITIALIZE LOCAL STORAGE FOR TOPIC NOTES
-    let topicNotes = JSON.parse(localStorage.getItem('nu_topic_notes')) || {
-      'PSYCH06X': [
-        {
-          id: 'sample-1',
-          topic: 'Chapter 1: Overview of Abnormal Psychology',
-          subtitle: 'Definition & Criteria of Psychological Disorders',
-          content: 'Psychopathology is the scientific study of psychological disorders. Clinical description includes presenting problem, prevalence, incidence, etiology, and prognosis.',
-          timestamp: '10/22/2026, 08:30 AM'
-        }
-      ]
-    };
-
-    function saveNotesToStorage() {
-      localStorage.setItem('nu_topic_notes', JSON.stringify(topicNotes));
-    }
-
-    // 3. TAB NAVIGATION
-    function switchTab(tab) {
-      const scheduleView = document.getElementById('view-schedule');
-      const notesView = document.getElementById('view-notes');
-      const scheduleBtn = document.getElementById('tab-schedule-btn');
-      const notesBtn = document.getElementById('tab-notes-btn');
-
-      if (tab === 'schedule') {
-        scheduleView.classList.remove('hidden');
-        notesView.classList.add('hidden');
-        
-        scheduleBtn.className = "py-3 px-1 border-b-2 border-nu-navy font-bold text-sm text-nu-navy flex items-center space-x-2";
-        notesBtn.className = "py-3 px-1 border-b-2 border-transparent font-medium text-sm text-slate-500 hover:text-slate-800 flex items-center space-x-2";
-      } else {
-        scheduleView.classList.add('hidden');
-        notesView.classList.remove('hidden');
-
-        notesBtn.className = "py-3 px-1 border-b-2 border-nu-navy font-bold text-sm text-nu-navy flex items-center space-x-2";
-        scheduleBtn.className = "py-3 px-1 border-b-2 border-transparent font-medium text-sm text-slate-500 hover:text-slate-800 flex items-center space-x-2";
-        
-        renderSubjectNotes();
-      }
-    }
-
- 
+    <div class="flex border-b border-slate-200 text-xs font-bold text-slate-600">
+      <button id="drawer-tab-archive" onclick="switchDrawerTab('archive')" class="flex-1 py-2.5 text-center b
